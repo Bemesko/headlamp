@@ -202,18 +202,18 @@ export default function EditorDialog(props: EditorDialogProps) {
   }
 
   function getObjectsFromCode(codeInfo: typeof originalCodeRef.current): {
-    obj: KubeObjectInterface[] | null;
+    obj: KubeObjectInterface[];
     format: string;
     error: Error | null;
   } {
     const { code, format } = codeInfo;
-    const res: { obj: KubeObjectInterface[] | null; format: string; error: Error | null } = {
-      obj: null,
+    const res: { obj: KubeObjectInterface[]; format: string; error: Error | null } = {
+      obj: [],
       format,
       error: null,
     };
 
-    if (!format || (!res.obj && looksLikeJson(code))) {
+    if (!format || looksLikeJson(code)) {
       res.format = 'json';
       try {
         let helperArr = [];
@@ -230,18 +230,12 @@ export default function EditorDialog(props: EditorDialogProps) {
       }
     }
 
-    if (!res.obj) {
-      res.format = 'yaml';
-      try {
-        res.obj = yaml.loadAll(code) as KubeObjectInterface[];
-        return res;
-      } catch (e) {
-        res.error = new Error((e as Error).message || t('Invalid YAML'));
-      }
-    }
-
-    if (!!res.obj) {
-      res.error = null;
+    res.format = 'yaml';
+    try {
+      const parsedYaml = yaml.loadAll(code) as KubeObjectInterface[];
+      res.obj = (parsedYaml || []).filter(item => item !== null);
+    } catch (e) {
+      res.error = new Error((e as Error).message || t('Invalid YAML'));
     }
 
     return res;

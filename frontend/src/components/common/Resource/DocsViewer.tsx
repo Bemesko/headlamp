@@ -92,6 +92,8 @@ function DocsViewer(props: { docSpecs: any }) {
     <>
       {docsLoading ? (
         <Loader title={t('Loading documentation')} />
+      ) : docs.length === 0 ? (
+        <Empty>{t('No documentation available.')}</Empty>
       ) : (
         docs.map((docSpec: any, idx: number) => {
           if (!docSpec.error && !docSpec.data) {
