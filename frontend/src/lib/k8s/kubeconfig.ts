@@ -146,6 +146,8 @@ export interface KubeconfigObject {
         extension: {
           /** customName is the custom name for the cluster. */
           customName?: string;
+          /** originalName is the name the cluster was created with */
+          originalName?: string;
         };
       }>;
     };

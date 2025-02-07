@@ -252,7 +252,45 @@ export function findKubeconfigByClusterName(clusterName: string): Promise<string
             );
 
             if (matchingKubeconfig || matchingContext) {
-              resolve(kubeconfig);
+              const contextToUpdate = matchingKubeconfig || matchingContext;
+              const extensions = contextToUpdate?.context.extensions || [];
+              let headlampExtension = extensions.find(
+                extension => extension.name === 'headlamp_info'
+              );
+
+              if (!headlampExtension) {
+                headlampExtension = {
+                  extension: { originalName: contextToUpdate?.name },
+                  name: 'headlamp_info',
+                };
+                extensions.push(headlampExtension);
+              } else if (!headlampExtension.extension.originalName) {
+                headlampExtension.extension.originalName = contextToUpdate?.name;
+              }
+
+              if (contextToUpdate && contextToUpdate.context) {
+                contextToUpdate.context.extensions = extensions;
+              }
+
+              // Convert the updated kubeconfig back to base64
+              const updatedKubeconfig = btoa(jsyaml.dump(parsedKubeconfig));
+
+              // Update the IndexedDB entry
+              const updateTransaction = db.transaction(['kubeconfigStore'], 'readwrite');
+              const updateStore = updateTransaction.objectStore('kubeconfigStore');
+              const updateRequest = updateStore.put({
+                ...cursor.value,
+                kubeconfig: updatedKubeconfig,
+              });
+
+              updateRequest.onsuccess = function () {
+                resolve(updatedKubeconfig);
+              };
+
+              updateRequest.onerror = function (event: Event) {
+                console.error('Failed to update headlamp_info:', event);
+                reject('Failed to update headlamp_info');
+              };
             } else {
               cursor.continue();
             }

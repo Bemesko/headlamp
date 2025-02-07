@@ -20,6 +20,7 @@ import Event from '../../../lib/k8s/event';
 import { createRouteURL } from '../../../lib/router';
 import { useId } from '../../../lib/util';
 import { setConfig } from '../../../redux/configSlice';
+import { findKubeconfigByClusterName } from '../../../stateless';
 import { Link, PageGrid, SectionBox, SectionFilterHeader } from '../../common';
 import { ConfirmDialog } from '../../common';
 import ResourceTable from '../../common/Resource/ResourceTable';
@@ -238,6 +239,10 @@ function HomeComponent(props: HomeComponentProps) {
       .sort();
   }
 
+  async function handleDynamicClusterName(cluster: string) {
+    findKubeconfigByClusterName(cluster);
+  }
+
   /**
    * Gets the origin of a cluster.
    *
@@ -249,6 +254,7 @@ function HomeComponent(props: HomeComponentProps) {
       const kubeconfigPath = process.env.KUBECONFIG ?? '~/.kube/config';
       return `Kubeconfig: ${kubeconfigPath}`;
     } else if (cluster.meta_data?.source === 'dynamic_cluster') {
+      handleDynamicClusterName(cluster.name || '');
       return t('translation|Plugin');
     } else if (cluster.meta_data?.source === 'in_cluster') {
       return t('translation|In-cluster');
